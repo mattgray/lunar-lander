@@ -31,7 +31,13 @@ worldInit :: Lander
 worldInit = Lander startAltitude (0.0 *~ (metre/second))
 
 drawWorld :: Lander -> Picture
-drawWorld (Lander h v) = Color white $ Pictures [(Translate 0 (altitudeToPixels h) $ fromGround $ Circle 5), (atTopLeftCorner $ Text (show h ++ " " ++ show v))]
+drawWorld lander = Color white  $ Pictures [drawLander lander, drawInstruments lander]
+
+drawLander :: Lander -> Picture
+drawLander (Lander h v) = (Translate 0 (altitudeToPixels h) $ fromGround $ Circle 5)
+
+drawInstruments :: Lander -> Picture
+drawInstruments (Lander h v) = (atTopLeftCorner $ Text (show h ++ " " ++ show v))
 
 advanceWorld :: ViewPort -> Float -> Lander -> Lander
 advanceWorld _ t lander = applyGravity lander t'
