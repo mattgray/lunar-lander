@@ -2,11 +2,11 @@ import Graphics.Gloss
 import Graphics.Gloss.Interface.Simulate
 import Numeric.Units.Dimensional.Prelude
 import Numeric.Units.Dimensional.Quantities(Velocity)
-import qualified Prelude
+import qualified Prelude as P
 
 main = simulateInWindow
     "Lunar Lander"
-    (Prelude.truncate screenSize, Prelude.truncate screenSize)
+    (P.truncate screenSize, P.truncate screenSize)
     (10, 10)
     black
     30
@@ -20,7 +20,7 @@ pixelsPerMetre = 10 :: Int
 startAltitude = 5500 *~ metre
 
 altitudeToPixels :: (Length Float) -> Float
-altitudeToPixels altitude = (altitude /~ metre) Prelude./ 10
+altitudeToPixels altitude = (altitude /~ metre) P./ 10
 
 gravity = negate $ 9.81 *~ (metre / (second * second))
 
@@ -38,7 +38,7 @@ advanceWorld _ t lander = applyGravity lander t'
     where t' = t *~ second
 
 fromGround :: Picture -> Picture
-fromGround p = Translate 0 (Prelude.negate $ screenSize Prelude./ 2) p
+fromGround p = Translate 0 (P.negate $ screenSize P./ 2) p
 
 atTopLeftCorner :: Picture -> Picture
 atTopLeftCorner p = Translate (-295) (250) (Scale 0.1 0.1 p)
