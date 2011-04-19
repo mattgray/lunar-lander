@@ -1,5 +1,5 @@
 import Graphics.Gloss
-import Graphics.Gloss.Interface.Simulate
+import Graphics.Gloss.Interface.Simulate(simulateInWindow, ViewPort)
 import Numeric.Units.Dimensional.Prelude
 import Numeric.Units.Dimensional.Quantities(Velocity)
 import qualified Prelude as P
@@ -17,7 +17,7 @@ main = simulateInWindow
 screenSize = 600
 pixelsPerMetre = 10 :: Int
 
-startAltitude = 5500 *~ metre
+startAltitude = 3500 *~ metre
 
 altitudeToPixels :: (Length Float) -> Float
 altitudeToPixels altitude = (altitude /~ metre) P./ 10
@@ -26,13 +26,17 @@ gravity = negate $ 9.81 *~ (metre / (second * second))
 
 data Lander = Lander {altitude :: (Length Float), velocity :: (Velocity Float)}
 
-data World = World {lander :: Lander}
+data Surface = Surface Path
+
+data World = World {
+    lander :: Lander,
+    surface :: Surface}
 
 worldInit :: World
-worldInit = World $ Lander startAltitude (0.0 *~ (metre/second))
+worldInit = World {lander =  Lander startAltitude (0.0 *~ (metre/second)), surface = Surface [(-300, 10), (300, 10)]}
 
 drawWorld :: World -> Picture
-drawWorld (World lander) = Color white $ Pictures [drawLander lander, drawInstruments lander]
+drawWorld (World lander surface) = Color white $ Pictures [drawLander lander, drawInstruments lander, drawSurface surface]
 
 drawLander :: Lander -> Picture
 drawLander lander = Translate 0 (altitudeToPixels $ altitude lander) $ fromGround $ Circle 5
@@ -41,11 +45,14 @@ drawInstruments :: Lander -> Picture
 drawInstruments lander = atTopLeftCorner $ smallText landerText
     where landerText = (show $ altitude lander) ++ " " ++ (show $ velocity lander)
 
+drawSurface :: Surface -> Picture
+drawSurface (Surface points) = fromGround $ Line points
+
 smallText :: String -> Picture
 smallText = Scale 0.1 0.1 . Text
 
 advanceWorld :: ViewPort -> Float -> World -> World
-advanceWorld _ t (World lander) = World {lander = applyGravity lander t'}
+advanceWorld _ t (World lander surface) = World {lander = applyGravity lander t', surface = surface}
     where t' = t *~ second
 
 fromGround :: Picture -> Picture
