@@ -24,32 +24,36 @@ altitudeToPixels altitude = (altitude /~ metre) P./ 10
 
 gravity = negate $ 9.81 *~ (metre / (second * second))
 
-type Altitude = Length
-data Lander = Lander (Altitude Float) (Velocity Float)
+data Lander = Lander {altitude :: (Length Float), velocity :: (Velocity Float)}
+--data World = World {lander :: Lander}
 
 worldInit :: Lander
 worldInit = Lander startAltitude (0.0 *~ (metre/second))
 
 drawWorld :: Lander -> Picture
-drawWorld lander = Color white  $ Pictures [drawLander lander, drawInstruments lander]
+drawWorld lander = Color white $ Pictures [drawLander lander, drawInstruments lander]
 
 drawLander :: Lander -> Picture
-drawLander (Lander h v) = (Translate 0 (altitudeToPixels h) $ fromGround $ Circle 5)
+drawLander lander = Translate 0 (altitudeToPixels $ altitude lander) $ fromGround $ Circle 5
 
 drawInstruments :: Lander -> Picture
-drawInstruments (Lander h v) = (atTopLeftCorner $ Text (show h ++ " " ++ show v))
+drawInstruments lander = atTopLeftCorner $ smallText landerText
+    where landerText = (show $ altitude lander) ++ " " ++ (show $ velocity lander)
+
+smallText :: String -> Picture
+smallText = Scale 0.1 0.1 . Text
 
 advanceWorld :: ViewPort -> Float -> Lander -> Lander
 advanceWorld _ t lander = applyGravity lander t'
     where t' = t *~ second
 
 fromGround :: Picture -> Picture
-fromGround p = Translate 0 (P.negate $ screenSize P./ 2) p
+fromGround = Translate 0 (P.negate $ screenSize P./ 2)
 
 atTopLeftCorner :: Picture -> Picture
-atTopLeftCorner p = Translate (-295) (250) (Scale 0.1 0.1 p)
+atTopLeftCorner = Translate (-295) (250)
 
 applyGravity :: Lander -> (Time Float) -> Lander
 applyGravity (Lander h v) t = Lander h' v' where
-	h' = h + (v * t) + ((_1/_2) * gravity * t * t)
-	v' = v + (gravity * t)
+	h' = h + v * t + ((_1/_2) * gravity * t * t)
+	v' = v + gravity * t
