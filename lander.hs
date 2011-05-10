@@ -33,10 +33,17 @@ data World = World {
     surface :: Surface}
 
 worldInit :: World
-worldInit = World {lander =  Lander startAltitude (0.0 *~ (metre/second)), surface = Surface [(-300, 10), (300, 10)]}
+worldInit = World {lander = Lander startAltitude (0.0 *~ (metre/second)), surface = Surface [(-300, 10), (300, 10)]}
+
+itemsToDraw :: [World -> Picture]
+itemsToDraw = [
+    drawLander . lander,
+    drawInstruments . lander,
+    drawSurface . surface
+    ]
 
 drawWorld :: World -> Picture
-drawWorld (World lander surface) = Color white $ Pictures [drawLander lander, drawInstruments lander, drawSurface surface]
+drawWorld world = Color white $ Pictures $ map ($ world) itemsToDraw
 
 drawLander :: Lander -> Picture
 drawLander lander = Translate 0 (altitudeToPixels $ altitude lander) $ fromGround $ Circle 5
@@ -54,6 +61,7 @@ smallText = Scale 0.1 0.1 . Text
 advanceWorld :: ViewPort -> Float -> World -> World
 advanceWorld _ t (World lander surface) = World {lander = applyGravity lander t', surface = surface}
     where t' = t *~ second
+
 
 fromGround :: Picture -> Picture
 fromGround = Translate 0 (P.negate $ screenSize P./ 2)
