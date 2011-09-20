@@ -24,7 +24,20 @@ altitudeToPixels altitude = (altitude /~ metre) P./ 10
 
 gravity = negate $ 9.81 *~ (metre / (second * second))
 
-data Lander = Lander {altitude :: (Length Float), velocity :: (Velocity Float)}
+type Altitude = Length Float
+
+type LanderVelocity = Velocity Float 
+
+data Lander =   Falling Altitude LanderVelocity
+                | Crashed Altitude
+
+altitude :: Lander -> Altitude
+altitude (Falling a _) = a
+altitude (Crashed a) = a
+
+velocity :: Lander -> LanderVelocity
+velocity (Falling _ v) = v
+velocity (Crashed _) = 10 *~ (metre/second)
 
 data Surface = Surface Path
 
@@ -33,7 +46,7 @@ data World = World {
     surface :: Surface}
 
 worldInit :: World
-worldInit = World {lander = Lander startAltitude (0.0 *~ (metre/second)), surface = Surface [(-300, 10), (300, 10)]}
+worldInit = World {lander = Falling startAltitude (0.0 *~ (metre/second)), surface = Surface [(-300, 10), (300, 10)]}
 
 itemsToDraw :: [World -> Picture]
 itemsToDraw = [
@@ -59,7 +72,7 @@ smallText :: String -> Picture
 smallText = Scale 0.1 0.1 . Text
 
 advanceWorld :: ViewPort -> Float -> World -> World
-advanceWorld _ t (World lander surface) = World {lander = applyGravity lander t', surface = surface}
+advanceWorld _ t (World lander surface) = World {lander = advanceLander lander t', surface = surface}
     where t' = t *~ second
 
 
@@ -69,7 +82,17 @@ fromGround = Translate 0 (P.negate $ screenSize P./ 2)
 atTopLeftCorner :: Picture -> Picture
 atTopLeftCorner = Translate (-295) (250)
 
+advanceLander :: Lander -> (Time Float) -> Lander
+advanceLander lander@(Falling h v) t = hasCrashed $ applyGravity lander t
+advanceLander crashed@(Crashed _) _ = crashed
+
 applyGravity :: Lander -> (Time Float) -> Lander
-applyGravity (Lander h v) t = Lander h' v' where
+applyGravity (Falling h v) t = Falling h' v' where
 	h' = h + v * t + ((_1/_2) * gravity * t * t)
 	v' = v + gravity * t
+
+
+hasCrashed :: Lander -> Lander
+hasCrashed crashed@(Crashed a) = crashed
+hasCrashed lander@(Falling h v) = let crashed = altitude lander < (10 *~ metre) in 
+                                    if crashed then Crashed (altitude lander) else lander
